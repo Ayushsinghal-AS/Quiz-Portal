@@ -40,7 +40,7 @@ export const HomePage = () => {
     setCardErrors((prev) => ({ ...prev, [quiz.id]: "" }));
 
     if (!user) {
-      navigate("/auth");
+      navigate(`/quizzes/${quiz.id}`);
       return;
     }
 

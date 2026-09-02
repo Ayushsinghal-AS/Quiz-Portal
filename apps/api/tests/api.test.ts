@@ -331,6 +331,17 @@ describe("QuizArena API", () => {
     expect(participantLeaderboardAfterPublish.status).toBe(200);
     expect(participantLeaderboardAfterPublish.body[0].participantEmail).toBe(participantCredentials.email);
 
+    const otherParticipantAgent = request.agent(app);
+    const otherParticipantCsrf = await withCsrf(otherParticipantAgent);
+    await otherParticipantAgent
+      .post("/api/auth/register")
+      .set("x-csrf-token", otherParticipantCsrf)
+      .send({ name: "Bystander", email: "bystander@test.dev" });
+    const bystanderLeaderboardResponse = await otherParticipantAgent.get(
+      `/api/quizzes/${quizId}/leaderboard`,
+    );
+    expect(bystanderLeaderboardResponse.status).toBe(403);
+
     const analyticsResponse = await adminAgent.get(`/api/quizzes/${quizId}/analytics`);
     expect(analyticsResponse.status).toBe(200);
     expect(analyticsResponse.body.totalParticipants).toBe(1);

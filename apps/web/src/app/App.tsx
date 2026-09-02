@@ -7,6 +7,9 @@ import { AuthProvider } from "../features/auth/AuthContext";
 
 const HomePage = lazy(() => import("../pages/HomePage").then((module) => ({ default: module.HomePage })));
 const AuthPage = lazy(() => import("../pages/AuthPage").then((module) => ({ default: module.AuthPage })));
+const QuizLandingPage = lazy(() =>
+  import("../pages/QuizLandingPage").then((module) => ({ default: module.QuizLandingPage })),
+);
 const AdminLoginPage = lazy(() =>
   import("../pages/AdminLoginPage").then((module) => ({ default: module.AdminLoginPage })),
 );
@@ -38,6 +41,7 @@ export const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/quizzes/:id" element={<QuizLandingPage />} />
             <Route element={<ProtectedRoute role="participant" />}>
               <Route path="/attempts/:id/session" element={<AttemptPage />} />
               <Route path="/attempts/:id/result" element={<ResultPage />} />

@@ -246,8 +246,20 @@ export const getQuizLeaderboard = async (req: Request, res: Response) => {
   if (!quiz) {
     throw new HttpError(404, "Quiz not found");
   }
-  if (req.authUser?.role !== "admin" && !quiz.leaderboardPublished) {
-    throw new HttpError(403, "Leaderboard is not published for this quiz");
+
+  if (req.authUser?.role !== "admin") {
+    if (!quiz.leaderboardPublished) {
+      throw new HttpError(403, "Leaderboard is not published for this quiz");
+    }
+
+    const completedAttempt = await AttemptModel.findOne({
+      quizId,
+      userId: req.authUser?.id,
+      status: { $in: ["submitted", "auto_submitted"] },
+    });
+    if (!completedAttempt) {
+      throw new HttpError(403, "Complete the quiz to view its leaderboard");
+    }
   }
 
   const leaderboard = await getLeaderboard(quizId);
