@@ -303,14 +303,19 @@ describe("QuizArena API", () => {
     expect(resultResponse.status).toBe(200);
     expect(resultResponse.body.correctCount).toBe(2);
 
-    const leaderboardResponse = await request(app).get(`/api/quizzes/${quizId}/leaderboard`);
+    const leaderboardResponse = await adminAgent.get(`/api/quizzes/${quizId}/leaderboard`);
     expect(leaderboardResponse.status).toBe(200);
     expect(leaderboardResponse.body[0].rank).toBe(1);
+    expect(leaderboardResponse.body[0].participantEmail).toBe(participantCredentials.email);
+
+    const anonymousLeaderboardResponse = await request(app).get(`/api/quizzes/${quizId}/leaderboard`);
+    expect(anonymousLeaderboardResponse.status).toBe(401);
 
     const analyticsResponse = await adminAgent.get(`/api/quizzes/${quizId}/analytics`);
     expect(analyticsResponse.status).toBe(200);
     expect(analyticsResponse.body.totalParticipants).toBe(1);
-    expect(analyticsResponse.body.questionStats).toHaveLength(2);
+    expect(analyticsResponse.body.leaderboard).toHaveLength(1);
+    expect(analyticsResponse.body.publishedAt).not.toBeNull();
   });
 
   it("auto-submits expired attempts", async () => {

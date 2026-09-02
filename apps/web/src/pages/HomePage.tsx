@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { ActiveAttemptResponse, QuizListItem } from "@quizarena/shared";
+import type { MyAttemptResponse, QuizListItem } from "@quizarena/shared";
 import { api, getErrorMessage } from "../api/client";
 import { SectionHeader } from "../components/SectionHeader";
 import { useAuth } from "../features/auth/AuthContext";
@@ -10,6 +10,7 @@ export const HomePage = () => {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const [attemptStatuses, setAttemptStatuses] = useState<Record<string, MyAttemptResponse | null>>({});
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -19,6 +20,21 @@ export const HomePage = () => {
       .then((response) => setQuizzes(response.data))
       .catch((caught) => setError(getErrorMessage(caught)));
   }, []);
+
+  useEffect(() => {
+    if (!user || user.role !== "participant") {
+      return;
+    }
+
+    quizzes
+      .filter((quiz) => quiz.status === "published")
+      .forEach((quiz) => {
+        api
+          .get<MyAttemptResponse>(`/quizzes/${quiz.id}/my-attempt`)
+          .then((response) => setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: response.data })))
+          .catch(() => setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: null })));
+      });
+  }, [quizzes, user]);
 
   const handleStart = async (quiz: QuizListItem) => {
     setCardErrors((prev) => ({ ...prev, [quiz.id]: "" }));
@@ -38,20 +54,56 @@ export const HomePage = () => {
       navigate(`/attempts/${response.data.attemptId}/session`);
       return;
     } catch (caught) {
-      const message = getErrorMessage(caught);
-      if (message.toLowerCase().includes("active attempt")) {
-        try {
-          const active = await api.get<ActiveAttemptResponse>(`/quizzes/${quiz.id}/active-attempt`);
-          navigate(`/attempts/${active.data.attemptId}/session`);
-          return;
-        } catch {
-          // fall through and surface the original error below
-        }
+      try {
+        const mine = await api.get<MyAttemptResponse>(`/quizzes/${quiz.id}/my-attempt`);
+        setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: mine.data }));
+        navigate(
+          mine.data.status === "in_progress"
+            ? `/attempts/${mine.data.attemptId}/session`
+            : `/attempts/${mine.data.attemptId}/result`,
+        );
+        return;
+      } catch {
+        setCardErrors((prev) => ({ ...prev, [quiz.id]: getErrorMessage(caught) }));
       }
-      setCardErrors((prev) => ({ ...prev, [quiz.id]: message }));
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleCardAction = (quiz: QuizListItem) => {
+    const attemptInfo = attemptStatuses[quiz.id];
+
+    if (attemptInfo?.status === "in_progress") {
+      navigate(`/attempts/${attemptInfo.attemptId}/session`);
+      return;
+    }
+
+    if (attemptInfo?.status === "submitted" || attemptInfo?.status === "auto_submitted") {
+      navigate(`/attempts/${attemptInfo.attemptId}/result`);
+      return;
+    }
+
+    void handleStart(quiz);
+  };
+
+  const cardLabel = (quiz: QuizListItem) => {
+    if (busyId === quiz.id) {
+      return "Preparing...";
+    }
+    if (user?.role === "admin") {
+      return "Participants Only";
+    }
+
+    const attemptInfo = attemptStatuses[quiz.id];
+    if (attemptInfo?.status === "in_progress") {
+      return "Continue Attempt";
+    }
+    if (attemptInfo?.status === "submitted" || attemptInfo?.status === "auto_submitted") {
+      return "View Result";
+    }
+
+    return "Start Quiz";
   };
 
   return (
@@ -94,15 +146,11 @@ export const HomePage = () => {
                 {quiz.status === "published" ? (
                   <button
                     type="button"
-                    onClick={() => handleStart(quiz)}
+                    onClick={() => handleCardAction(quiz)}
                     disabled={busyId === quiz.id || user?.role === "admin"}
                     className="rounded-full bg-arena-400 px-4 py-2 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {busyId === quiz.id
-                      ? "Preparing..."
-                      : user?.role === "admin"
-                        ? "Participants Only"
-                        : "Start Quiz"}
+                    {cardLabel(quiz)}
                   </button>
                 ) : (
                   <span className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-arena-100/70">

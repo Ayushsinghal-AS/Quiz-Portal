@@ -8,6 +8,7 @@ export interface QuizDocument {
   durationMinutes: number;
   status: QuizStatus;
   createdBy: mongoose.Types.ObjectId;
+  publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +20,7 @@ const quizSchema = new Schema<QuizDocument>(
     durationMinutes: { type: Number, required: true, min: 1 },
     status: { type: String, enum: ["draft", "published"], default: "draft" },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    publishedAt: { type: Date },
   },
   {
     timestamps: true,

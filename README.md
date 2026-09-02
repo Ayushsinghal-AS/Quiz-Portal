@@ -277,8 +277,8 @@ Once everything is running:
 | `PATCH` | `/api/quizzes/:id/publish` | Publish a quiz (admin) |
 | `POST` | `/api/quizzes/:id/questions` | Add question (admin) |
 | `POST` | `/api/quizzes/:id/start` | Start an attempt |
-| `GET` | `/api/quizzes/:id/active-attempt` | Get active attempt ID |
-| `GET` | `/api/quizzes/:id/leaderboard` | Get leaderboard |
+| `GET` | `/api/quizzes/:id/my-attempt` | Get my latest attempt (any status) |
+| `GET` | `/api/quizzes/:id/leaderboard` | Get leaderboard (admin) |
 | `GET` | `/api/quizzes/:id/analytics` | Get analytics (admin) |
 
 ### Questions

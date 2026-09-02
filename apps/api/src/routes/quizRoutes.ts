@@ -4,7 +4,7 @@ import {
   createQuiz,
   deleteQuestion,
   deleteQuiz,
-  getActiveQuizAttempt,
+  getMyQuizAttempt,
   getInProgressAttemptSession,
   getAttemptResult,
   getQuizAnalytics,
@@ -33,8 +33,8 @@ quizRouter.delete("/:id", requireAuth, requireRole("admin"), asyncHandler(delete
 quizRouter.patch("/:id/publish", requireAuth, requireRole("admin"), asyncHandler(publishQuiz));
 quizRouter.post("/:id/questions", requireAuth, requireRole("admin"), validateBody(questionSchema), asyncHandler(addQuestion));
 quizRouter.post("/:id/start", requireAuth, requireRole("participant"), asyncHandler(startQuizAttempt));
-quizRouter.get("/:id/active-attempt", requireAuth, requireRole("participant"), asyncHandler(getActiveQuizAttempt));
-quizRouter.get("/:id/leaderboard", asyncHandler(getQuizLeaderboard));
+quizRouter.get("/:id/my-attempt", requireAuth, requireRole("participant"), asyncHandler(getMyQuizAttempt));
+quizRouter.get("/:id/leaderboard", requireAuth, requireRole("admin"), asyncHandler(getQuizLeaderboard));
 quizRouter.get("/:id/analytics", requireAuth, requireRole("admin"), asyncHandler(getQuizAnalytics));
 
 export const questionRouter = Router();
