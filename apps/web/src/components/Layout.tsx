@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import spanideaLogo from "../assets/spanidea-logo.svg";
 import { api, setCsrfToken } from "../api/client";
 import { useAuth } from "../features/auth/AuthContext";
 
@@ -28,8 +29,8 @@ export const Layout = ({ children }: { children: ReactNode }) => {
     <div className="min-h-screen">
       <header className="border-b border-white/10 bg-black/10 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <Link to="/" className="shrink-0 font-display text-3xl tracking-[0.18em] text-arena-300 sm:text-4xl">
-            QuizArena
+          <Link to="/" className="shrink-0">
+            <img src={spanideaLogo} alt="Spanidea" className="h-8 w-auto brightness-0 invert sm:h-10" />
           </Link>
           <nav className="flex w-full flex-wrap items-center gap-2 text-sm sm:w-auto sm:justify-end">
             <NavLink to="/" end className={navLinkClassName}>
