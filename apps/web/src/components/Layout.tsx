@@ -47,17 +47,9 @@ export const Layout = ({ children }: { children: ReactNode }) => {
                 Logout
               </button>
             ) : (
-              <>
-                <NavLink to="/auth" className={navLinkClassName}>
-                  Participant
-                </NavLink>
-                <NavLink
-                  to="/admin/login"
-                  className="inline-flex rounded-full bg-arena-400 px-4 py-2 font-semibold text-black transition hover:bg-arena-300"
-                >
-                  Admin Login
-                </NavLink>
-              </>
+              <NavLink to="/auth" className={navLinkClassName}>
+                Participant
+              </NavLink>
             )}
           </nav>
         </div>

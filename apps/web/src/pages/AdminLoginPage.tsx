@@ -5,8 +5,8 @@ import { useAuth } from "../features/auth/AuthContext";
 import { loginUser } from "../lib/authForms";
 
 export const AdminLoginPage = () => {
-  const [email, setEmail] = useState("admin@quizarena.dev");
-  const [password, setPassword] = useState("Admin123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { setUser } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export const AdminLoginPage = () => {
         <p className="text-xs uppercase tracking-[0.45em] text-arena-300">Admin Booth</p>
         <h1 className="mt-4 font-display text-5xl uppercase text-white">Control the Arena</h1>
         <p className="mt-3 text-sm text-arena-100/75">
-          Login with the seeded admin account to create quizzes, manage questions, and inspect analytics.
+          Sign in with your admin account to create quizzes, manage questions, and inspect analytics.
         </p>
         <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
           <label className="grid gap-2 text-sm text-arena-100">

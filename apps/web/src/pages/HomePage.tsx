@@ -100,7 +100,7 @@ export const HomePage = () => {
       return "Continue Attempt";
     }
     if (attemptInfo?.status === "submitted" || attemptInfo?.status === "auto_submitted") {
-      return "View Result";
+      return "View Status";
     }
 
     return "Start Quiz";
