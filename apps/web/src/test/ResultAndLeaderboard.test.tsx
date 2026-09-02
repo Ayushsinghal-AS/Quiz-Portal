@@ -51,15 +51,22 @@ describe("ResultPage and LeaderboardPage", () => {
   });
 
   it("renders leaderboard entries from the API", async () => {
-    apiGetMock.mockResolvedValueOnce({
-      data: [
-        {
-          rank: 1,
-          participantName: "Player One",
-          score: 30,
-          completionTimeSeconds: 70,
-        },
-      ],
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.endsWith("/leaderboard")) {
+        return Promise.resolve({
+          data: [
+            {
+              rank: 1,
+              participantName: "Player One",
+              participantEmail: "player-one@example.com",
+              score: 30,
+              completionTimeSeconds: 70,
+            },
+          ],
+        });
+      }
+
+      return Promise.resolve({ data: { id: "quiz-1", title: "JavaScript Arena Warmup" } });
     });
 
     render(
