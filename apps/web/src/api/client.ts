@@ -9,13 +9,6 @@ if (!apiBaseUrl) {
 export const api = axios.create({
   baseURL: apiBaseUrl,
   withCredentials: true,
-  headers: {
-    // Skips ngrok's browser-warning interstitial page, which otherwise
-    // returns an HTML page instead of the API response for any visitor
-    // who hasn't manually clicked through it in that exact browser.
-    // Harmless when the API isn't behind ngrok.
-    "ngrok-skip-browser-warning": "true",
-  },
 });
 
 let csrfToken: string | null = null;
