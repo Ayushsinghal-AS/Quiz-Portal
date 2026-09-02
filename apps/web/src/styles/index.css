@@ -1,0 +1,44 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Bebas+Neue&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #fff4e4;
+  background:
+    radial-gradient(circle at top, rgba(240, 141, 73, 0.14), transparent 32%),
+    linear-gradient(180deg, #160f0b 0%, #100c09 100%);
+  font-family: "Archivo", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    linear-gradient(140deg, rgba(240, 141, 73, 0.08), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(255, 222, 153, 0.08), transparent 20%),
+    #140f0b;
+  color: #fff0d5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.arena-shell {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent),
+    rgba(25, 19, 15, 0.88);
+  border: 1px solid rgba(255, 220, 178, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.score-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
