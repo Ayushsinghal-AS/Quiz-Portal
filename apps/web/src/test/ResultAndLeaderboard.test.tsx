@@ -45,8 +45,9 @@ describe("ResultPage and LeaderboardPage", () => {
     );
 
     await waitFor(() => expect(screen.getByText("JavaScript Arena Warmup")).toBeInTheDocument());
-    expect(screen.getByText("20/30")).toBeInTheDocument();
     expect(screen.getByText("01:35")).toBeInTheDocument();
+    expect(screen.getByText("submitted")).toBeInTheDocument();
+    expect(screen.queryByText("20/30")).not.toBeInTheDocument();
   });
 
   it("renders leaderboard entries from the API", async () => {

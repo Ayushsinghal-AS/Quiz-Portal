@@ -28,9 +28,11 @@ export const Layout = ({ children }: { children: ReactNode }) => {
             <NavLink to="/" className={navLinkClassName}>
               Play
             </NavLink>
-            <NavLink to="/leaderboard" className={navLinkClassName}>
-              Leaderboards
-            </NavLink>
+            {user?.role === "admin" && (
+              <NavLink to="/leaderboard" className={navLinkClassName}>
+                Leaderboards
+              </NavLink>
+            )}
             {user?.role === "admin" && (
               <NavLink to="/admin" className={navLinkClassName}>
                 Admin

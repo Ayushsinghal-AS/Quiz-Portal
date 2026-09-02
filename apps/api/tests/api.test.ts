@@ -17,7 +17,6 @@ const adminCredentials = { email: "admin@test.dev", password: "Admin123!" };
 const participantCredentials = {
   name: "Player One",
   email: "player@test.dev",
-  password: "Player123!",
 };
 
 const createQuizPayload = {
@@ -74,28 +73,16 @@ afterEach(async () => {
 });
 
 describe("QuizArena API", () => {
-  it("supports register/login/me/logout for participants", async () => {
-    const registerAgent = request.agent(app);
-    const registerCsrf = await withCsrf(registerAgent);
-    const registerResponse = await registerAgent
+  it("supports register/me/logout for participants", async () => {
+    const agent = request.agent(app);
+    const csrfToken = await withCsrf(agent);
+    const registerResponse = await agent
       .post("/api/auth/register")
-      .set("x-csrf-token", registerCsrf)
+      .set("x-csrf-token", csrfToken)
       .send(participantCredentials);
     expect(registerResponse.status).toBe(201);
     expect(registerResponse.body.user.role).toBe("participant");
-
-    const agent = request.agent(app);
-    const csrfToken = await withCsrf(agent);
-    const loginResponse = await agent
-      .post("/api/auth/login")
-      .send({
-        email: participantCredentials.email,
-        password: participantCredentials.password,
-      })
-      .set("x-csrf-token", csrfToken);
-
-    expect(loginResponse.status).toBe(200);
-    const sessionCsrf = loginResponse.body.csrfToken;
+    const sessionCsrf = registerResponse.body.csrfToken;
 
     const meResponse = await agent.get("/api/auth/me");
     expect(meResponse.status).toBe(200);
@@ -107,6 +94,26 @@ describe("QuizArena API", () => {
     const anonymousMeResponse = await agent.get("/api/auth/me");
     expect(anonymousMeResponse.status).toBe(200);
     expect(anonymousMeResponse.body.user).toBeNull();
+  });
+
+  it("re-registering with the same email re-enters the same participant account without a password", async () => {
+    const firstAgent = request.agent(app);
+    const firstCsrf = await withCsrf(firstAgent);
+    const firstResponse = await firstAgent
+      .post("/api/auth/register")
+      .set("x-csrf-token", firstCsrf)
+      .send(participantCredentials);
+    const firstId = firstResponse.body.user.id;
+
+    const secondAgent = request.agent(app);
+    const secondCsrf = await withCsrf(secondAgent);
+    const secondResponse = await secondAgent
+      .post("/api/auth/register")
+      .set("x-csrf-token", secondCsrf)
+      .send(participantCredentials);
+
+    expect(secondResponse.status).toBe(201);
+    expect(secondResponse.body.user.id).toBe(firstId);
   });
 
   it("allows admin quiz CRUD and publish flow", async () => {
@@ -332,7 +339,6 @@ describe("QuizArena API", () => {
     const secondParticipant = {
       name: "Player Two",
       email: "player2@test.dev",
-      password: "Player123!",
     };
 
     const participantAgent = request.agent(app);

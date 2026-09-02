@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import type { QuizListItem } from "@quizarena/shared";
+import { useNavigate } from "react-router-dom";
+import type { ActiveAttemptResponse, QuizListItem } from "@quizarena/shared";
 import { api, getErrorMessage } from "../api/client";
 import { SectionHeader } from "../components/SectionHeader";
+import { useAuth } from "../features/auth/AuthContext";
 
 export const HomePage = () => {
   const [quizzes, setQuizzes] = useState<QuizListItem[]>([]);
   const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     api
@@ -14,6 +19,40 @@ export const HomePage = () => {
       .then((response) => setQuizzes(response.data))
       .catch((caught) => setError(getErrorMessage(caught)));
   }, []);
+
+  const handleStart = async (quiz: QuizListItem) => {
+    setCardErrors((prev) => ({ ...prev, [quiz.id]: "" }));
+
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (user.role !== "participant") {
+      return;
+    }
+
+    setBusyId(quiz.id);
+    try {
+      const response = await api.post(`/quizzes/${quiz.id}/start`);
+      navigate(`/attempts/${response.data.attemptId}/session`);
+      return;
+    } catch (caught) {
+      const message = getErrorMessage(caught);
+      if (message.toLowerCase().includes("active attempt")) {
+        try {
+          const active = await api.get<ActiveAttemptResponse>(`/quizzes/${quiz.id}/active-attempt`);
+          navigate(`/attempts/${active.data.attemptId}/session`);
+          return;
+        } catch {
+          // fall through and surface the original error below
+        }
+      }
+      setCardErrors((prev) => ({ ...prev, [quiz.id]: message }));
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div className="score-grid">
@@ -24,11 +63,10 @@ export const HomePage = () => {
             title="Timed Quizzes. Real Scoreboard Energy."
             description="Challenge yourself with published quizzes, beat the countdown, and climb the leaderboard. QuizArena is built to demonstrate practical fullstack engineering with a product-ready presentation."
           />
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
             {[
               { label: "Published Quizzes", value: quizzes.length.toString().padStart(2, "0") },
               { label: "Leaderboard Sorting", value: "Score + Time" },
-              { label: "Admin Insights", value: "Live Analytics" },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-white/10 bg-black/20 p-5">
                 <p className="text-xs uppercase tracking-[0.3em] text-arena-100/60">{item.label}</p>
@@ -54,18 +92,27 @@ export const HomePage = () => {
               <div className="mt-6 flex items-center justify-between text-sm text-arena-100/70">
                 <span>{quiz.questionCount} questions</span>
                 {quiz.status === "published" ? (
-                  <Link
-                    to={`/quizzes/${quiz.id}`}
-                    className="rounded-full bg-arena-400 px-4 py-2 font-semibold text-black"
+                  <button
+                    type="button"
+                    onClick={() => handleStart(quiz)}
+                    disabled={busyId === quiz.id || user?.role === "admin"}
+                    className="rounded-full bg-arena-400 px-4 py-2 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    View Quiz
-                  </Link>
+                    {busyId === quiz.id
+                      ? "Preparing..."
+                      : user?.role === "admin"
+                        ? "Participants Only"
+                        : "Start Quiz"}
+                  </button>
                 ) : (
                   <span className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-arena-100/70">
                     Unpublished
                   </span>
                 )}
               </div>
+              {cardErrors[quiz.id] ? (
+                <p className="mt-3 text-sm text-red-300">{cardErrors[quiz.id]}</p>
+              ) : null}
             </article>
           ))}
         </section>

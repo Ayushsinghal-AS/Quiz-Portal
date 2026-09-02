@@ -13,9 +13,6 @@ const AdminLoginPage = lazy(() =>
 const LeaderboardPage = lazy(() =>
   import("../pages/LeaderboardPage").then((module) => ({ default: module.LeaderboardPage })),
 );
-const QuizDetailPage = lazy(() =>
-  import("../pages/QuizDetailPage").then((module) => ({ default: module.QuizDetailPage })),
-);
 const AttemptPage = lazy(() =>
   import("../pages/AttemptPage").then((module) => ({ default: module.AttemptPage })),
 );
@@ -41,14 +38,13 @@ export const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/quizzes/:id" element={<QuizDetailPage />} />
-            <Route path="/quizzes/:id/leaderboard" element={<LeaderboardPage />} />
             <Route element={<ProtectedRoute role="participant" />}>
               <Route path="/attempts/:id/session" element={<AttemptPage />} />
               <Route path="/attempts/:id/result" element={<ResultPage />} />
             </Route>
             <Route element={<ProtectedRoute role="admin" />}>
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/quizzes/:id/leaderboard" element={<LeaderboardPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/quizzes/new" element={<AdminQuizEditorPage />} />
               <Route path="/admin/quizzes/:id/edit" element={<AdminQuizEditorPage />} />
