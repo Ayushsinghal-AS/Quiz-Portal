@@ -8,12 +8,12 @@ export interface JwtPayload {
   role: Role;
 }
 
-export const hashPassword = (password: string) => bcrypt.hash(password, 10);
+export const hashPassword = (password: string) => bcrypt.hash(password, env.BCRYPT_SALT_ROUNDS);
 export const comparePassword = (password: string, hash: string) => bcrypt.compare(password, hash);
 
 export const signToken = (payload: JwtPayload) =>
   jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: Math.floor(env.AUTH_SESSION_MAX_AGE_MS / 1000),
   });
 
 export const verifyToken = (token: string) =>

@@ -1,6 +1,16 @@
 process.env.NODE_ENV = "test";
+process.env.PORT = "4000";
+process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/quizarena-test";
+process.env.REDIS_URL = "redis://127.0.0.1:6379";
 process.env.JWT_SECRET = "test-secret";
 process.env.COOKIE_SECRET = "test-cookie-secret";
 process.env.CLIENT_URL = "http://localhost:5173";
 process.env.USE_IN_MEMORY_CACHE = "true";
 process.env.LOG_LEVEL = "error";
+process.env.SEED_ADMIN_NAME = "QuizArena Admin";
+process.env.SEED_ADMIN_EMAIL = "admin@quizarena.dev";
+process.env.SEED_ADMIN_PASSWORD = "Admin123!";
+process.env.AUTH_SESSION_MAX_AGE_MS = "604800000";
+process.env.BCRYPT_SALT_ROUNDS = "4";
+process.env.AUTH_RATE_LIMIT_WINDOW_SECONDS = "60";
+process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = "8";

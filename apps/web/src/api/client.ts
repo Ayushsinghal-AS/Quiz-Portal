@@ -1,8 +1,13 @@
 import type { AuthResponse, CsrfTokenResponse } from "@quizarena/shared";
 import axios from "axios";
 
+const apiBaseUrl = import.meta.env.VITE_API_URL;
+if (!apiBaseUrl) {
+  throw new Error("VITE_API_URL is not set. Configure it in apps/web/.env.");
+}
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:4000/api",
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     // Skips ngrok's browser-warning interstitial page, which otherwise

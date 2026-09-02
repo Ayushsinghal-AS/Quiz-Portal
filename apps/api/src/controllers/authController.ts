@@ -10,7 +10,7 @@ const cookieOptions = {
   httpOnly: true,
   sameSite: env.cookieSameSite,
   secure: env.cookieSecure,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: env.AUTH_SESSION_MAX_AGE_MS,
 };
 
 const clearCookieOptions = {
