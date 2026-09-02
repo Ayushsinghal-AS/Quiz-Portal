@@ -241,8 +241,24 @@ export const getAttemptResult = async (req: Request, res: Response) => {
 };
 
 export const getQuizLeaderboard = async (req: Request, res: Response) => {
-  const leaderboard = await getLeaderboard(getRouteId(req.params.id));
+  const quizId = getRouteId(req.params.id);
+  const quiz = await QuizModel.findById(quizId);
+  if (!quiz) {
+    throw new HttpError(404, "Quiz not found");
+  }
+  if (req.authUser?.role !== "admin" && !quiz.leaderboardPublished) {
+    throw new HttpError(403, "Leaderboard is not published for this quiz");
+  }
+
+  const leaderboard = await getLeaderboard(quizId);
   res.json(serializeLeaderboard(leaderboard));
+};
+
+export const toggleLeaderboardPublish = async (req: Request, res: Response) => {
+  const quiz = await ensureAdminOwnsQuiz(getRouteId(req.params.id), req.authUser!.id);
+  quiz.leaderboardPublished = !quiz.leaderboardPublished;
+  await quiz.save();
+  res.json({ leaderboardPublished: quiz.leaderboardPublished });
 };
 
 export const getQuizAnalytics = async (req: Request, res: Response) => {
@@ -299,6 +315,7 @@ export const getQuizAnalytics = async (req: Request, res: Response) => {
     createdAt: quiz.createdAt.toISOString(),
     publishedAt: quiz.publishedAt ? quiz.publishedAt.toISOString() : null,
     leaderboard,
+    leaderboardPublished: quiz.leaderboardPublished,
   };
 
   res.json(serializeAnalytics(analytics));

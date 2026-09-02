@@ -311,11 +311,35 @@ describe("QuizArena API", () => {
     const anonymousLeaderboardResponse = await request(app).get(`/api/quizzes/${quizId}/leaderboard`);
     expect(anonymousLeaderboardResponse.status).toBe(401);
 
+    const participantLeaderboardBeforePublish = await participantAgent.get(
+      `/api/quizzes/${quizId}/leaderboard`,
+    );
+    expect(participantLeaderboardBeforePublish.status).toBe(403);
+
+    const analyticsBeforePublishResponse = await adminAgent.get(`/api/quizzes/${quizId}/analytics`);
+    expect(analyticsBeforePublishResponse.body.leaderboardPublished).toBe(false);
+
+    const publishLeaderboardResponse = await adminAgent
+      .patch(`/api/quizzes/${quizId}/leaderboard-publish`)
+      .set("x-csrf-token", adminSessionCsrf);
+    expect(publishLeaderboardResponse.status).toBe(200);
+    expect(publishLeaderboardResponse.body.leaderboardPublished).toBe(true);
+
+    const participantLeaderboardAfterPublish = await participantAgent.get(
+      `/api/quizzes/${quizId}/leaderboard`,
+    );
+    expect(participantLeaderboardAfterPublish.status).toBe(200);
+    expect(participantLeaderboardAfterPublish.body[0].participantEmail).toBe(participantCredentials.email);
+
     const analyticsResponse = await adminAgent.get(`/api/quizzes/${quizId}/analytics`);
     expect(analyticsResponse.status).toBe(200);
     expect(analyticsResponse.body.totalParticipants).toBe(1);
     expect(analyticsResponse.body.leaderboard).toHaveLength(1);
     expect(analyticsResponse.body.publishedAt).not.toBeNull();
+    expect(analyticsResponse.body.leaderboardPublished).toBe(true);
+
+    const resultAfterPublishResponse = await participantAgent.get(`/api/attempts/${attemptId}/result`);
+    expect(resultAfterPublishResponse.body.leaderboardPublished).toBe(true);
   });
 
   it("auto-submits expired attempts", async () => {

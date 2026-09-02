@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import type { QuizAnalytics } from "@quizarena/shared";
+import type { LeaderboardPublishResponse, QuizAnalytics } from "@quizarena/shared";
 import { api, getErrorMessage } from "../api/client";
 
 const formatDate = (value: string | null) => {
@@ -17,6 +17,7 @@ export const AdminAnalyticsPage = () => {
   const { id = "" } = useParams();
   const [analytics, setAnalytics] = useState<QuizAnalytics | null>(null);
   const [error, setError] = useState("");
+  const [publishBusy, setPublishBusy] = useState(false);
 
   useEffect(() => {
     api
@@ -24,6 +25,18 @@ export const AdminAnalyticsPage = () => {
       .then((response) => setAnalytics(response.data))
       .catch((caught) => setError(getErrorMessage(caught)));
   }, [id]);
+
+  const handleToggleLeaderboardPublish = async () => {
+    setPublishBusy(true);
+    try {
+      const response = await api.patch<LeaderboardPublishResponse>(`/quizzes/${id}/leaderboard-publish`);
+      setAnalytics((prev) => (prev ? { ...prev, leaderboardPublished: response.data.leaderboardPublished } : prev));
+    } catch (caught) {
+      setError(getErrorMessage(caught));
+    } finally {
+      setPublishBusy(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!analytics) {
@@ -89,15 +102,34 @@ export const AdminAnalyticsPage = () => {
 
         <div className="mt-10 rounded-[2rem] border border-white/10 bg-black/20 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-3xl uppercase text-white">Leaderboard</h2>
-            <button
-              type="button"
-              onClick={() => void handleDownload()}
-              disabled={analytics.leaderboard.length === 0}
-              className="rounded-full bg-arena-400 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Download Excel
-            </button>
+            <div>
+              <h2 className="font-display text-3xl uppercase text-white">Leaderboard</h2>
+              <p className="mt-1 text-xs uppercase tracking-[0.25em] text-arena-100/60">
+                {analytics.leaderboardPublished ? "Visible to students" : "Hidden from students"}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void handleToggleLeaderboardPublish()}
+                disabled={publishBusy}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  analytics.leaderboardPublished
+                    ? "border border-arena-400/50 text-arena-100 hover:border-arena-300/70 hover:text-white"
+                    : "bg-arena-400 text-black"
+                }`}
+              >
+                {analytics.leaderboardPublished ? "Unpublish Leaderboard" : "Publish Leaderboard"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownload()}
+                disabled={analytics.leaderboard.length === 0}
+                className="rounded-full bg-arena-400 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Download Excel
+              </button>
+            </div>
           </div>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[480px] text-left text-sm">

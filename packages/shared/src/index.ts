@@ -67,6 +67,7 @@ export interface AttemptResult {
   completionTimeSeconds: number;
   status: AttemptStatus;
   submittedAt: string;
+  leaderboardPublished: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -88,6 +89,11 @@ export interface QuizAnalytics {
   createdAt: string;
   publishedAt: string | null;
   leaderboard: LeaderboardEntry[];
+  leaderboardPublished: boolean;
+}
+
+export interface LeaderboardPublishResponse {
+  leaderboardPublished: boolean;
 }
 
 export interface ApiErrorResponse {

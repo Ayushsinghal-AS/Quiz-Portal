@@ -43,6 +43,14 @@ export const ResultPage = () => {
           <Link to="/" className="rounded-full bg-arena-400 px-5 py-3 font-semibold text-black">
             Back to Quiz List
           </Link>
+          {result.leaderboardPublished ? (
+            <Link
+              to={`/quizzes/${result.quizId}/leaderboard`}
+              className="rounded-full border border-white/10 px-5 py-3 font-semibold text-arena-100"
+            >
+              View Leaderboard
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>

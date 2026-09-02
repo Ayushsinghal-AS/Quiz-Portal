@@ -42,9 +42,11 @@ export const App = () => (
               <Route path="/attempts/:id/session" element={<AttemptPage />} />
               <Route path="/attempts/:id/result" element={<ResultPage />} />
             </Route>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/quizzes/:id/leaderboard" element={<LeaderboardPage />} />
+            </Route>
             <Route element={<ProtectedRoute role="admin" />}>
               <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/quizzes/:id/leaderboard" element={<LeaderboardPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/quizzes/new" element={<AdminQuizEditorPage />} />
               <Route path="/admin/quizzes/:id/edit" element={<AdminQuizEditorPage />} />

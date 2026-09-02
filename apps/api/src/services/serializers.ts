@@ -106,6 +106,7 @@ export const serializeAttemptResult = (
   completionTimeSeconds: attempt.completionTimeSeconds,
   status: attempt.status,
   submittedAt: attempt.submittedAt?.toISOString() ?? attempt.updatedAt.toISOString(),
+  leaderboardPublished: quiz.leaderboardPublished,
 });
 
 export const serializeLeaderboard = (
