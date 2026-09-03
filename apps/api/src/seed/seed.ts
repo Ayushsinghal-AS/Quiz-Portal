@@ -273,11 +273,6 @@ const seed = async () => {
     }
   }
 
-  console.log("Seed complete");
-  console.log(`Admin email: ${env.SEED_ADMIN_EMAIL}`);
-  console.log(`Admin password: ${env.SEED_ADMIN_PASSWORD}`);
-  console.log(`Quiz templates available: ${quizTemplates.length}`);
-
   await disconnectDatabase();
 };
 
