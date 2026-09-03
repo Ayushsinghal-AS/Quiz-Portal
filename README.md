@@ -214,9 +214,9 @@ Once everything is running:
 | `COOKIE_SECRET` | — | Secret for signing cookies |
 | `CLIENT_URL` | `http://localhost:5173` | Allowed CORS origin |
 | `LOG_LEVEL` | `info` | Log verbosity |
-| `SEED_ADMIN_NAME` | `QuizArena Admin` | Seeded admin name |
-| `SEED_ADMIN_EMAIL` | `admin@quizarena.dev` | Seeded admin email |
-| `SEED_ADMIN_PASSWORD` | `Admin123!` | Seeded admin password |
+| `SEED_ADMIN_NAME` | `Spanidea Admin` | Seeded admin name |
+| `SEED_ADMIN_EMAIL` | `admin@spanidea.com` | Seeded admin email |
+| `SEED_ADMIN_PASSWORD` | `Spanidea@2001` | Seeded admin password |
 
 ### `apps/web/.env`
 
