@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { login, logout, me, register } from "../controllers/authController.js";
+import { env } from "../config/env.js";
 import { csrfTokenHandler } from "../middleware/csrf.js";
 import { optionalAuth } from "../middleware/auth.js";
 import { createRateLimiter } from "../middleware/rateLimit.js";
@@ -8,7 +9,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { loginSchema, registerSchema } from "../utils/validators.js";
 
 export const authRouter = Router();
-const authLimiter = createRateLimiter({ key: "auth", windowSeconds: 60, maxRequests: 8 });
+const authLimiter = createRateLimiter({
+  key: "auth",
+  windowSeconds: env.AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  maxRequests: env.AUTH_RATE_LIMIT_MAX_REQUESTS,
+});
 
 authRouter.get("/csrf-token", csrfTokenHandler);
 authRouter.post("/register", authLimiter, validateBody(registerSchema), asyncHandler(register));

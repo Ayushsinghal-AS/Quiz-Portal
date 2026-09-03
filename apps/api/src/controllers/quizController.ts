@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import mongoose, { Types } from "mongoose";
-import { serializeActiveAttempt } from "../services/serializers.js";
+import { serializeMyAttempt } from "../services/serializers.js";
 import { AttemptModel } from "../models/Attempt.js";
 import { QuestionModel } from "../models/Question.js";
 import { QuizModel } from "../models/Quiz.js";
@@ -16,8 +16,8 @@ import {
 } from "../services/serializers.js";
 import {
   finalizeAttempt,
-  getActiveAttempt,
   getAttemptSession,
+  getMyAttempt,
   saveAttemptAnswer,
   startAttempt,
 } from "../services/attempts.js";
@@ -77,6 +77,7 @@ export const createQuiz = async (req: Request, res: Response) => {
   const quiz = await QuizModel.create({
     ...req.body,
     createdBy: req.authUser?.id,
+    publishedAt: req.body.status === "published" ? new Date() : undefined,
   });
 
   res.status(201).json(serializeQuizDetail(quiz, [], true));
@@ -89,6 +90,9 @@ export const updateQuiz = async (req: Request, res: Response) => {
   quiz.description = req.body.description;
   quiz.durationMinutes = req.body.durationMinutes;
   quiz.status = req.body.status;
+  if (quiz.status === "published") {
+    quiz.publishedAt = new Date();
+  }
   await quiz.save();
 
   const questions = await QuestionModel.find({ quizId: quiz._id }).sort({ order: 1 });
@@ -130,6 +134,9 @@ export const deleteQuiz = async (req: Request, res: Response) => {
 export const publishQuiz = async (req: Request, res: Response) => {
   const quiz = await ensureAdminOwnsQuiz(getRouteId(req.params.id), req.authUser!.id);
   quiz.status = quiz.status === "published" ? "draft" : "published";
+  if (quiz.status === "published") {
+    quiz.publishedAt = new Date();
+  }
   await quiz.save();
   const questions = await QuestionModel.find({ quizId: quiz._id }).sort({ order: 1 });
   res.json(serializeQuizDetail(quiz, questions, true));
@@ -184,9 +191,9 @@ export const startQuizAttempt = async (req: Request, res: Response) => {
   res.status(201).json(serializeAttemptSession(attempt, quiz, questions, state.answers));
 };
 
-export const getActiveQuizAttempt = async (req: Request, res: Response) => {
-  const attempt = await getActiveAttempt(getRouteId(req.params.id), req.authUser!.id);
-  res.json(serializeActiveAttempt(String(attempt._id)));
+export const getMyQuizAttempt = async (req: Request, res: Response) => {
+  const attempt = await getMyAttempt(getRouteId(req.params.id), req.authUser!.id);
+  res.json(serializeMyAttempt(attempt));
 };
 
 export const getInProgressAttemptSession = async (req: Request, res: Response) => {
@@ -234,14 +241,41 @@ export const getAttemptResult = async (req: Request, res: Response) => {
 };
 
 export const getQuizLeaderboard = async (req: Request, res: Response) => {
-  const leaderboard = await getLeaderboard(getRouteId(req.params.id));
+  const quizId = getRouteId(req.params.id);
+  const quiz = await QuizModel.findById(quizId);
+  if (!quiz) {
+    throw new HttpError(404, "Quiz not found");
+  }
+
+  if (req.authUser?.role !== "admin") {
+    if (!quiz.leaderboardPublished) {
+      throw new HttpError(403, "Leaderboard is not published for this quiz");
+    }
+
+    const completedAttempt = await AttemptModel.findOne({
+      quizId,
+      userId: req.authUser?.id,
+      status: { $in: ["submitted", "auto_submitted"] },
+    });
+    if (!completedAttempt) {
+      throw new HttpError(403, "Complete the quiz to view its leaderboard");
+    }
+  }
+
+  const leaderboard = await getLeaderboard(quizId);
   res.json(serializeLeaderboard(leaderboard));
+};
+
+export const toggleLeaderboardPublish = async (req: Request, res: Response) => {
+  const quiz = await ensureAdminOwnsQuiz(getRouteId(req.params.id), req.authUser!.id);
+  quiz.leaderboardPublished = !quiz.leaderboardPublished;
+  await quiz.save();
+  res.json({ leaderboardPublished: quiz.leaderboardPublished });
 };
 
 export const getQuizAnalytics = async (req: Request, res: Response) => {
   const quiz = await ensureAdminOwnsQuiz(getRouteId(req.params.id), req.authUser!.id);
   const quizObjectId = new Types.ObjectId(String(quiz._id));
-  const questions = await QuestionModel.find({ quizId: quiz._id }).sort({ order: 1 }).lean();
 
   const [attemptSummary] = await AttemptModel.aggregate<{
     totalAttempts: number;
@@ -279,40 +313,7 @@ export const getQuizAnalytics = async (req: Request, res: Response) => {
     },
   ]);
 
-  const answerStats = await AnswerModel.aggregate<{
-    _id: Types.ObjectId;
-    answerCount: number;
-    correctCount: number;
-  }>([
-    {
-      $lookup: {
-        from: "attempts",
-        localField: "attemptId",
-        foreignField: "_id",
-        as: "attempt",
-      },
-    },
-    { $unwind: "$attempt" },
-    {
-      $match: {
-        "attempt.quizId": quizObjectId,
-        "attempt.status": { $in: ["submitted", "auto_submitted"] },
-      },
-    },
-    {
-      $group: {
-        _id: "$questionId",
-        answerCount: { $sum: 1 },
-        correctCount: {
-          $sum: {
-            $cond: ["$isCorrect", 1, 0],
-          },
-        },
-      },
-    },
-  ]);
-
-  const answerMap = new Map(answerStats.map((item) => [String(item._id), item]));
+  const leaderboard = await getLeaderboard(String(quiz._id));
   const totalAttempts = attemptSummary?.totalAttempts ?? 0;
   const totalParticipants = attemptSummary?.totalParticipants ?? 0;
   const analytics = {
@@ -323,16 +324,10 @@ export const getQuizAnalytics = async (req: Request, res: Response) => {
     highestScore: attemptSummary?.highestScore ?? 0,
     lowestScore: attemptSummary?.lowestScore ?? 0,
     completionRate: totalAttempts === 0 ? 0 : Number(((totalParticipants / totalAttempts) * 100).toFixed(1)),
-    questionStats: questions.map((question) => {
-      const stat = answerMap.get(String(question._id));
-      const answerCount = stat?.answerCount ?? 0;
-      const correctCount = stat?.correctCount ?? 0;
-      return {
-        questionId: String(question._id),
-        questionText: question.questionText,
-        correctAnswerRate: answerCount === 0 ? 0 : Number(((correctCount / answerCount) * 100).toFixed(1)),
-      };
-    }),
+    createdAt: quiz.createdAt.toISOString(),
+    publishedAt: quiz.publishedAt ? quiz.publishedAt.toISOString() : null,
+    leaderboard,
+    leaderboardPublished: quiz.leaderboardPublished,
   };
 
   res.json(serializeAnalytics(analytics));

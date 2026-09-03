@@ -45,20 +45,28 @@ describe("ResultPage and LeaderboardPage", () => {
     );
 
     await waitFor(() => expect(screen.getByText("JavaScript Arena Warmup")).toBeInTheDocument());
-    expect(screen.getByText("20/30")).toBeInTheDocument();
     expect(screen.getByText("01:35")).toBeInTheDocument();
+    expect(screen.getByText("submitted")).toBeInTheDocument();
+    expect(screen.queryByText("20/30")).not.toBeInTheDocument();
   });
 
   it("renders leaderboard entries from the API", async () => {
-    apiGetMock.mockResolvedValueOnce({
-      data: [
-        {
-          rank: 1,
-          participantName: "Player One",
-          score: 30,
-          completionTimeSeconds: 70,
-        },
-      ],
+    apiGetMock.mockImplementation((url: string) => {
+      if (url.endsWith("/leaderboard")) {
+        return Promise.resolve({
+          data: [
+            {
+              rank: 1,
+              participantName: "Player One",
+              participantEmail: "player-one@example.com",
+              score: 30,
+              completionTimeSeconds: 70,
+            },
+          ],
+        });
+      }
+
+      return Promise.resolve({ data: { id: "quiz-1", title: "JavaScript Arena Warmup" } });
     });
 
     render(

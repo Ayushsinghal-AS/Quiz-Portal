@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import type { QuizListItem } from "@quizarena/shared";
+import { useNavigate } from "react-router-dom";
+import type { MyAttemptResponse, QuizListItem } from "@quizarena/shared";
 import { api, getErrorMessage } from "../api/client";
 import { SectionHeader } from "../components/SectionHeader";
+import { useAuth } from "../features/auth/AuthContext";
 
 export const HomePage = () => {
   const [quizzes, setQuizzes] = useState<QuizListItem[]>([]);
   const [error, setError] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const [attemptStatuses, setAttemptStatuses] = useState<Record<string, MyAttemptResponse | null>>({});
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     api
@@ -15,20 +21,104 @@ export const HomePage = () => {
       .catch((caught) => setError(getErrorMessage(caught)));
   }, []);
 
+  useEffect(() => {
+    if (!user || user.role !== "participant") {
+      return;
+    }
+
+    quizzes
+      .filter((quiz) => quiz.status === "published")
+      .forEach((quiz) => {
+        api
+          .get<MyAttemptResponse>(`/quizzes/${quiz.id}/my-attempt`)
+          .then((response) => setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: response.data })))
+          .catch(() => setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: null })));
+      });
+  }, [quizzes, user]);
+
+  const handleStart = async (quiz: QuizListItem) => {
+    setCardErrors((prev) => ({ ...prev, [quiz.id]: "" }));
+
+    if (!user) {
+      navigate(`/quizzes/${quiz.id}`);
+      return;
+    }
+
+    if (user.role !== "participant") {
+      return;
+    }
+
+    setBusyId(quiz.id);
+    try {
+      const response = await api.post(`/quizzes/${quiz.id}/start`);
+      navigate(`/attempts/${response.data.attemptId}/session`);
+      return;
+    } catch (caught) {
+      try {
+        const mine = await api.get<MyAttemptResponse>(`/quizzes/${quiz.id}/my-attempt`);
+        setAttemptStatuses((prev) => ({ ...prev, [quiz.id]: mine.data }));
+        navigate(
+          mine.data.status === "in_progress"
+            ? `/attempts/${mine.data.attemptId}/session`
+            : `/attempts/${mine.data.attemptId}/result`,
+        );
+        return;
+      } catch {
+        setCardErrors((prev) => ({ ...prev, [quiz.id]: getErrorMessage(caught) }));
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleCardAction = (quiz: QuizListItem) => {
+    const attemptInfo = attemptStatuses[quiz.id];
+
+    if (attemptInfo?.status === "in_progress") {
+      navigate(`/attempts/${attemptInfo.attemptId}/session`);
+      return;
+    }
+
+    if (attemptInfo?.status === "submitted" || attemptInfo?.status === "auto_submitted") {
+      navigate(`/attempts/${attemptInfo.attemptId}/result`);
+      return;
+    }
+
+    void handleStart(quiz);
+  };
+
+  const cardLabel = (quiz: QuizListItem) => {
+    if (busyId === quiz.id) {
+      return "Preparing...";
+    }
+    if (user?.role === "admin") {
+      return "Participants Only";
+    }
+
+    const attemptInfo = attemptStatuses[quiz.id];
+    if (attemptInfo?.status === "in_progress") {
+      return "Continue Attempt";
+    }
+    if (attemptInfo?.status === "submitted" || attemptInfo?.status === "auto_submitted") {
+      return "View Status";
+    }
+
+    return "Start Quiz";
+  };
+
   return (
     <div className="score-grid">
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="arena-shell rounded-[2rem] p-8 shadow-glow">
           <SectionHeader
-            eyebrow="Portfolio MVP"
-            title="Timed Quizzes. Real Scoreboard Energy."
-            description="Challenge yourself with published quizzes, beat the countdown, and climb the leaderboard. QuizArena is built to demonstrate practical fullstack engineering with a product-ready presentation."
+            eyebrow="SPANIDEA QUIZ HUB"
+            title="TECH KNOWLEDGE REAL CHALLENGE"
+            description="Challenge yourself with quizzes across software, embedded systems, Al, cloud, and digital engineering. Compete with your peers, sharpen your skills, and climb the leaderboard."
           />
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
             {[
-              { label: "Published Quizzes", value: quizzes.length.toString().padStart(2, "0") },
+              { label: "Available Quizzes", value: quizzes.length.toString().padStart(2, "0") },
               { label: "Leaderboard Sorting", value: "Score + Time" },
-              { label: "Admin Insights", value: "Live Analytics" },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-white/10 bg-black/20 p-5">
                 <p className="text-xs uppercase tracking-[0.3em] text-arena-100/60">{item.label}</p>
@@ -54,18 +144,23 @@ export const HomePage = () => {
               <div className="mt-6 flex items-center justify-between text-sm text-arena-100/70">
                 <span>{quiz.questionCount} questions</span>
                 {quiz.status === "published" ? (
-                  <Link
-                    to={`/quizzes/${quiz.id}`}
-                    className="rounded-full bg-arena-400 px-4 py-2 font-semibold text-black"
+                  <button
+                    type="button"
+                    onClick={() => handleCardAction(quiz)}
+                    disabled={busyId === quiz.id || user?.role === "admin"}
+                    className="rounded-full bg-arena-400 px-4 py-2 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    View Quiz
-                  </Link>
+                    {cardLabel(quiz)}
+                  </button>
                 ) : (
                   <span className="rounded-full border border-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-arena-100/70">
                     Unpublished
                   </span>
                 )}
               </div>
+              {cardErrors[quiz.id] ? (
+                <p className="mt-3 text-sm text-red-300">{cardErrors[quiz.id]}</p>
+              ) : null}
             </article>
           ))}
         </section>

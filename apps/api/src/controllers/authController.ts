@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { UserModel } from "../models/User.js";
-import { comparePassword, hashPassword, signToken } from "../utils/auth.js";
+import { comparePassword, signToken } from "../utils/auth.js";
 import { HttpError } from "../utils/httpError.js";
 import { env } from "../config/env.js";
 import { serializeUser } from "../services/serializers.js";
@@ -10,7 +10,7 @@ const cookieOptions = {
   httpOnly: true,
   sameSite: env.cookieSameSite,
   secure: env.cookieSecure,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
+  maxAge: env.AUTH_SESSION_MAX_AGE_MS,
 };
 
 const clearCookieOptions = {
@@ -20,17 +20,22 @@ const clearCookieOptions = {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const existingUser = await UserModel.findOne({ email: req.body.email.toLowerCase() });
-  if (existingUser) {
-    throw new HttpError(409, "Email is already registered");
-  }
+  const email = req.body.email.toLowerCase();
+  let user = await UserModel.findOne({ email });
 
-  const user = await UserModel.create({
-    name: req.body.name,
-    email: req.body.email.toLowerCase(),
-    passwordHash: await hashPassword(req.body.password),
-    role: "participant",
-  });
+  if (user) {
+    if (user.role !== "participant") {
+      throw new HttpError(409, "Email is already registered");
+    }
+    user.name = req.body.name;
+    await user.save();
+  } else {
+    user = await UserModel.create({
+      name: req.body.name,
+      email,
+      role: "participant",
+    });
+  }
 
   const token = signToken({ sub: String(user._id), role: user.role });
   const csrfToken = issueCsrfToken(res);
@@ -40,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   const user = await UserModel.findOne({ email: req.body.email.toLowerCase() });
-  if (!user) {
+  if (!user || !user.passwordHash) {
     throw new HttpError(401, "Invalid email or password");
   }
 

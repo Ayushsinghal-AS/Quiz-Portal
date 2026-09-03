@@ -9,7 +9,7 @@ const start = async () => {
 
   const app = createApp();
   app.listen(env.PORT, () => {
-    console.log(`QuizArena API running on http://localhost:${env.PORT}`);
+    console.log(`QuizArena API running on port ${env.PORT}`);
   });
 };
 

@@ -46,15 +46,11 @@ export const startAttempt = async (quizId: string, userId: string) => {
   return { quiz, attempt: createdAttempt };
 };
 
-export const getActiveAttempt = async (quizId: string, userId: string) => {
-  const attempt = await AttemptModel.findOne({
-    quizId,
-    userId,
-    status: "in_progress",
-  });
+export const getMyAttempt = async (quizId: string, userId: string) => {
+  const attempt = await AttemptModel.findOne({ quizId, userId }).sort({ createdAt: -1 });
 
   if (!attempt) {
-    throw new HttpError(404, "No active attempt found");
+    throw new HttpError(404, "No attempt found");
   }
 
   return attempt;

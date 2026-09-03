@@ -1,9 +1,9 @@
 import type {
-  ActiveAttemptResponse,
   AttemptResult,
   AttemptSession,
   AuthUser,
   LeaderboardEntry,
+  MyAttemptResponse,
   QuizAnalytics,
   QuizDetail,
   QuizListItem,
@@ -84,8 +84,9 @@ export const serializeAttemptSession = (
   questions: questions.map(serializeQuestionForParticipant),
 });
 
-export const serializeActiveAttempt = (attemptId: string): ActiveAttemptResponse => ({
-  attemptId,
+export const serializeMyAttempt = (attempt: AttemptDocument): MyAttemptResponse => ({
+  attemptId: String(attempt._id),
+  status: attempt.status,
 });
 
 export const serializeAttemptResult = (
@@ -105,6 +106,7 @@ export const serializeAttemptResult = (
   completionTimeSeconds: attempt.completionTimeSeconds,
   status: attempt.status,
   submittedAt: attempt.submittedAt?.toISOString() ?? attempt.updatedAt.toISOString(),
+  leaderboardPublished: quiz.leaderboardPublished,
 });
 
 export const serializeLeaderboard = (

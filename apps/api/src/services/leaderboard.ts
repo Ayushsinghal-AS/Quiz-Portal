@@ -25,11 +25,12 @@ export const getLeaderboard = async (quizId: string): Promise<LeaderboardEntry[]
     _id: { $in: attempts.map((attempt) => attempt.userId) },
   }).lean();
 
-  const userMap = new Map(users.map((user) => [String(user._id), user.name]));
+  const userMap = new Map(users.map((user) => [String(user._id), { name: user.name, email: user.email }]));
 
   const leaderboard = attempts.map((attempt, index) => ({
     rank: index + 1,
-    participantName: userMap.get(String(attempt.userId)) ?? "Unknown Player",
+    participantName: userMap.get(String(attempt.userId))?.name ?? "Unknown Player",
+    participantEmail: userMap.get(String(attempt.userId))?.email ?? "",
     score: attempt.score,
     completionTimeSeconds: attempt.completionTimeSeconds,
   }));

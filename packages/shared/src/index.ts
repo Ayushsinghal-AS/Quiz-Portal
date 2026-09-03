@@ -67,11 +67,13 @@ export interface AttemptResult {
   completionTimeSeconds: number;
   status: AttemptStatus;
   submittedAt: string;
+  leaderboardPublished: boolean;
 }
 
 export interface LeaderboardEntry {
   rank: number;
   participantName: string;
+  participantEmail: string;
   score: number;
   completionTimeSeconds: number;
 }
@@ -84,11 +86,14 @@ export interface QuizAnalytics {
   highestScore: number;
   lowestScore: number;
   completionRate: number;
-  questionStats: Array<{
-    questionId: string;
-    questionText: string;
-    correctAnswerRate: number;
-  }>;
+  createdAt: string;
+  publishedAt: string | null;
+  leaderboard: LeaderboardEntry[];
+  leaderboardPublished: boolean;
+}
+
+export interface LeaderboardPublishResponse {
+  leaderboardPublished: boolean;
 }
 
 export interface ApiErrorResponse {
@@ -104,8 +109,9 @@ export interface CsrfTokenResponse {
   csrfToken: string;
 }
 
-export interface ActiveAttemptResponse {
+export interface MyAttemptResponse {
   attemptId: string;
+  status: AttemptStatus;
 }
 
 export interface QuizFormInput {

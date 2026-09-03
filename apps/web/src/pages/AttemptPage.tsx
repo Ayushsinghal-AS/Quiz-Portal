@@ -145,10 +145,7 @@ export const AttemptPage = () => {
         <div className="grid gap-5">
           {session.questions.map((question, index) => (
             <article id={`question-${question.id}`} key={question.id} className="arena-shell rounded-[2rem] p-6">
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-arena-100/60">Question {index + 1}</p>
-                <p className="text-sm text-arena-300">{question.points} pts</p>
-              </div>
+              <p className="text-xs uppercase tracking-[0.3em] text-arena-100/60">Question {index + 1}</p>
               <h2 className="mt-3 text-xl font-semibold text-white">{question.questionText}</h2>
               <div className="mt-5 grid gap-3">
                 {question.options.map((option) => {
