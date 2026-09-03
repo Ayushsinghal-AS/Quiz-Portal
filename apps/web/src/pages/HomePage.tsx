@@ -111,13 +111,13 @@ export const HomePage = () => {
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="arena-shell rounded-[2rem] p-8 shadow-glow">
           <SectionHeader
-            eyebrow="Portfolio MVP"
-            title="Timed Quizzes. Real Scoreboard Energy."
-            description="Challenge yourself with published quizzes, beat the countdown, and climb the leaderboard. QuizArena is built to demonstrate practical fullstack engineering with a product-ready presentation."
+            eyebrow="SPANIDEA QUIZ HUB"
+            title="TECH KNOWLEDGE REAL CHALLENGE"
+            description="Challenge yourself with quizzes across software, embedded systems, Al, cloud, and digital engineering. Compete with your peers, sharpen your skills, and climb the leaderboard."
           />
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {[
-              { label: "Published Quizzes", value: quizzes.length.toString().padStart(2, "0") },
+              { label: "Available Quizzes", value: quizzes.length.toString().padStart(2, "0") },
               { label: "Leaderboard Sorting", value: "Score + Time" },
             ].map((item) => (
               <div key={item.label} className="rounded-3xl border border-white/10 bg-black/20 p-5">

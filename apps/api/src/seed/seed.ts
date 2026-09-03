@@ -187,9 +187,9 @@ const quizTemplates = [
     ],
   },
   {
-    title: "REST API Design Template",
+    title: "AloT-POWERED ELDERLY MONITORING",
     description:
-      "Draft template focused on routes, resources, and status-code choices for API design reviews.",
+      "Test your understanding of loT-driven elderly monitoring systems, from connected devices and real-time data to intelligent health monitoring.",
     durationMinutes: 10,
     status: "draft" as const,
     questions: [
