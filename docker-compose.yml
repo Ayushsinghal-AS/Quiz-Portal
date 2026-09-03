@@ -7,19 +7,40 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongodb_data:/data/db
+      - quiz_mongodb_data:/data/db
 
-  redis:
-    image: redis:7-alpine
-    container_name: quizarena-redis
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: quizarena-api
     restart: unless-stopped
+    depends_on:
+      - mongodb
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
+      - "4000:4000"
+    env_file:
+      - apps/api/.env
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/quizarena
+      USE_IN_MEMORY_CACHE: "true"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000/api
+    env_file:
+      - apps/web/.env
+    container_name: quizarena-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
 
 volumes:
-  mongodb_data:
-  redis_data:
+  quiz_mongodb_data:
 
